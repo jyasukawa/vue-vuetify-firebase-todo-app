@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import { onMounted, ref, reactive } from 'vue';
-import { useRoute } from 'vue-router';
 import { db } from '@/firebase/firebase.ts';
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy } from 'firebase/firestore';
 
 const cards = ['Todo'];
-const Messages = reactive([]);
+const todoList = reactive([]);
 const user_id = ref('');
 const messageInput = ref('');
-const route = useRoute();
 
 const handleSubmit = async () => {
   if (messageInput.value.trim() !== '') {
@@ -19,8 +17,8 @@ const handleSubmit = async () => {
     };
 
     try {
-      const docRef = await addDoc(collection(db, "chats"), newMessage);
-      Messages.unshift({ ...newMessage, id: docRef.id }); // idを含める
+      const docRef = await addDoc(collection(db, "tasks"), newMessage);
+      todoList.unshift({ ...newMessage, id: docRef.id }); // idを含める
       messageInput.value = '';
     } catch (error) {
       console.error("Firestoreへのメッセージ保存に失敗しました:", error);
@@ -31,12 +29,12 @@ const handleSubmit = async () => {
 const handleDelete = async (id) => {
   try {
     // Firestoreから該当メッセージを削除
-    await deleteDoc(doc(db, "chats", id));
+    await deleteDoc(doc(db, "tasks", id));
 
     // ローカルのメッセージリストから削除
-    const index = Messages.findIndex((msg) => msg.id === id);
+    const index = todoList.findIndex((msg) => msg.id === id);
     if (index !== -1) {
-      Messages.splice(index, 1);
+      todoList.splice(index, 1);
     }
   } catch (error) {
     console.error("Firestoreからのメッセージ削除に失敗しました:", error);
@@ -51,7 +49,7 @@ const handleEdit = (item) => {
 
 const handleSave = async (item) => {
   try {
-    const messageDoc = doc(db, "chats", item.id);
+    const messageDoc = doc(db, "tasks", item.id);
     await updateDoc(messageDoc, { message: item.message });
 
     item.isEditing = false; // 編集モードを解除
@@ -74,14 +72,14 @@ const handleReset = () => {
 
 onMounted(async () => {
   try {
-    user_id.value = route.query.user_id || 'unknown';
-    const chatRef = collection(db, "chats");
+    user_id.value = 'unknown';
+    const chatRef = collection(db, "tasks");
 
     // timestampで降順にソート
     const chatQuery = query(chatRef, orderBy("timestamp", "desc"));
     const snapShot = await getDocs(chatQuery);
     snapShot.forEach((doc) => {
-      Messages.push({ ...doc.data(), id: doc.id }); // doc.idを含める
+      todoList.push({ ...doc.data(), id: doc.id }); // doc.idを含める
     });
   } catch (error) {
     console.error("Firestoreのデータ取得に失敗しました:", error);
@@ -99,7 +97,7 @@ onMounted(async () => {
               <v-list lines="two">
                 <v-list-subheader>{{ card }}</v-list-subheader>
 
-                <template v-for="(item, index) in Messages" :key="index">
+                <template v-for="(item, index) in todoList" :key="index">
                   <v-list-item>
                     <template #prepend>
                       <v-avatar color="grey-darken-1" size="24"></v-avatar>
@@ -127,7 +125,7 @@ onMounted(async () => {
                     </div>
                   </v-list-item>
 
-                  <v-divider v-if="index !== Messages.length - 1" :key="`divider-${index}`" inset></v-divider>
+                  <v-divider v-if="index !== todoList.length - 1" :key="`divider-${index}`" inset></v-divider>
                 </template>
               </v-list>
             </v-card>
