@@ -5,19 +5,19 @@ import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy 
 
 const cards = ['Todo'];
 const todoList = reactive([]);
-const messageInput = ref('');
+const taskInput = ref('');
 
 const handleSubmit = async () => {
-  if (messageInput.value.trim() !== '') {
-    const newMessage = { 
-      message: messageInput.value, 
+  if (taskInput.value.trim() !== '') {
+    const newTask = {
+      task: taskInput.value,
       timestamp: new Date()
     };
 
     try {
-      const docRef = await addDoc(collection(db, "tasks"), newMessage);
-      todoList.unshift({ ...newMessage, id: docRef.id }); // idを含める
-      messageInput.value = '';
+      const docRef = await addDoc(collection(db, "tasks"), newTask);
+      todoList.unshift({ ...newTask, id: docRef.id });
+      taskInput.value = '';
     } catch (error) {
       console.error("Firestoreへのメッセージ保存に失敗しました:", error);
     }
@@ -26,46 +26,46 @@ const handleSubmit = async () => {
 
 const handleDelete = async (id) => {
   try {
-    // Firestoreから該当メッセージを削除
+    // Firestoreから該当タスクを削除
     await deleteDoc(doc(db, "tasks", id));
 
-    // ローカルのメッセージリストから削除
-    const index = todoList.findIndex((msg) => msg.id === id);
+    // ローカルのタスクリストから削除
+    const index = todoList.findIndex((tsk) => tsk.id === id);
     if (index !== -1) {
       todoList.splice(index, 1);
     }
   } catch (error) {
-    console.error("Firestoreからのメッセージ削除に失敗しました:", error);
+    console.error("Firestoreからのタスク削除に失敗しました:", error);
   }
 };
 
 const handleEdit = (item) => {
-  // 編集モードに切り替え & 現在のメッセージを保存
-  item.originalMessage = item.message; 
+  // 編集モードに切り替え & 現在のタスクを保存
+  item.originalTask = item.task; 
   item.isEditing = true;
 };
 
 const handleSave = async (item) => {
   try {
-    const messageDoc = doc(db, "tasks", item.id);
-    await updateDoc(messageDoc, { message: item.message });
+    const taskDoc = doc(db, "tasks", item.id);
+    await updateDoc(taskDoc, { task: item.task });
 
     item.isEditing = false; // 編集モードを解除
-    delete item.originalMessage; // 保存後にoriginalMessageを削除
+    delete item.originalTask; // 保存後にoriginalTaskを削除
   } catch (error) {
-    console.error("Firestoreのメッセージ更新に失敗しました:", error);
+    console.error("Firestoreのタスク更新に失敗しました:", error);
   }
 };
 
 const handleCancelEdit = (item) => {
-  // 元のメッセージを復元し、編集モードを解除
-  item.message = item.originalMessage;
-  delete item.originalMessage;
+  // 元のタスクを復元し、編集モードを解除
+  item.task = item.originalTask;
+  delete item.originalTask;
   item.isEditing = false;
 };
 
 const handleReset = () => {
-  messageInput.value = '';
+  taskInput.value = '';
 };
 
 onMounted(async () => {
@@ -102,8 +102,8 @@ onMounted(async () => {
                     <div class="mcon">
                       <div v-if="item.isEditing">
                         <v-textarea
-                          v-model="item.message"
-                          label="メッセージを編集"
+                          v-model="item.task"
+                          label="タスクを編集"
                           rows="1"
                           auto-grow
                         ></v-textarea>
@@ -111,7 +111,7 @@ onMounted(async () => {
                         <v-btn @click="handleCancelEdit(item)" color="error" small>キャンセル</v-btn>
                       </div>
                       <div v-else class="todo-item">
-                        <v-list-item-title class="message">{{ item.message }}</v-list-item-title>
+                        <v-list-item-title class="task">{{ item.task }}</v-list-item-title>
                         <v-btn size="30" @click="handleEdit(item)" icon>
                           <v-icon>mdi-pencil</v-icon>
                         </v-btn>
@@ -133,7 +133,7 @@ onMounted(async () => {
       <v-container class="input-container">
           <div class="input-form">
             <v-textarea
-              v-model="messageInput"
+              v-model="taskInput"
               class="mx-2"
               label="タスクを追加する"
               rows="1"
@@ -149,7 +149,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.message {
+.task {
 	text-align: left;
 }
 .mcon {
