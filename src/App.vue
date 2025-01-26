@@ -5,15 +5,13 @@ import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy 
 
 const cards = ['Todo'];
 const todoList = reactive([]);
-const user_id = ref('');
 const messageInput = ref('');
 
 const handleSubmit = async () => {
   if (messageInput.value.trim() !== '') {
     const newMessage = { 
       message: messageInput.value, 
-      timestamp: new Date(), 
-      user_id: user_id.value 
+      timestamp: new Date()
     };
 
     try {
@@ -72,7 +70,6 @@ const handleReset = () => {
 
 onMounted(async () => {
   try {
-    user_id.value = 'unknown';
     const chatRef = collection(db, "tasks");
 
     // timestampで降順にソート
